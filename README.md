@@ -136,7 +136,7 @@ docker run -p 7860:7860 \
    - `SECRET`
 4. Build and deploy
 
-Endpoint: `https://<username>-<space-name>.hf.space/solve`
+Endpoint: `https://kradarsh-llm-quiz-solverv.hf.space/solve`
 
 ## How It Works
 
