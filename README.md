@@ -159,5 +159,5 @@ Endpoint: `https://kradarsh-llm-quiz-solverv.hf.space/solve`
 MIT License
 
 ## 👨‍💻 Author
-**KrAdarsh** - IITM TDS Project 2  
-[![GitHub](https://img.shields.io/badge/GitHub-KrAdarsh-black)](https://github.com/KrAdarsh)
+**Kr-Adarsh** - IITM TDS Project 2  
+[![GitHub](https://img.shields.io/badge/GitHub-Kr-Adarsh-black)](https://github.com/Kr-Adarsh)
