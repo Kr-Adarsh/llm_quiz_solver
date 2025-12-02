@@ -1,5 +1,5 @@
 ---
-title: Llm Quiz SolverV
+title: LLM Quiz SolverV
 emoji: 💻
 colorFrom: pink
 colorTo: green
@@ -9,7 +9,7 @@ pinned: false
 
 # LLM Quiz Solver
 
-**Live Demo**:  [![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Solve%20Quiz-brightgreen)](https://kradarsh-llm-quiz-solverv.hf.space/solve)
+**Server Running at**:  [![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Solve%20Quiz-brightgreen)](https://kradarsh-llm-quiz-solverv.hf.space/solve)
 
 An autonomous agent that solves multi-level data analysis quizzes using LangGraph state machine orchestration, Playwright for browser automation, and Google Gemini for reasoning.
 
@@ -114,12 +114,12 @@ Health check endpoint.
 
 | Tool | Purpose | Audio Support |
 |------|---------|---------------|
-| `get_rendered_html` | JS-rendered HTML scraping | ✅ Finds audio URLs |
+| `get_rendered_html` | JS-rendered HTML scraping | Finds audio URLs |
 | `run_code` | Python code execution | |
-| `download_file` | Downloads files/audios | ✅ Audio files |
+| `download_file` | Downloads files/audios | Audio files |
 | `post_request` | Submit quiz answers | |
 | `add_dependencies` | Auto pip install | |
-| `transcribe_audio` | Whisper transcription | ✅ `.opus/.wav/.ogg` |
+| `transcribe_audio` | Whisper transcription | `.opus/.wav/.ogg` |
 
 ## Deployment
 
