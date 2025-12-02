@@ -7,9 +7,9 @@ sdk: docker
 pinned: false
 ---
 
-Server running at https://kradarsh-llm-quiz-solverv.hf.space/solve
-
 # LLM Quiz Solver
+
+**Live Demo**:  [![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Solve%20Quiz-brightgreen)](https://kradarsh-llm-quiz-solverv.hf.space/solve)
 
 An autonomous agent that solves multi-level data analysis quizzes using LangGraph state machine orchestration, Playwright for browser automation, and Google Gemini for reasoning.
 
@@ -17,6 +17,7 @@ An autonomous agent that solves multi-level data analysis quizzes using LangGrap
 
 - **LangGraph-powered agent**: State machine-based orchestration with Gemini 2.5 Flash
 - **Playwright browser automation**: Renders JavaScript-heavy pages and captures dynamic content
+- **Audio Transcription**: Auto-detects, downloads & transcribes `.opus/.wav/.ogg` files using Whisper
 - **Multi-tool execution**: Web scraping, file downloading, Python code execution, HTTP requests
 - **Multi-level support**: Handles sequential quizzes with dynamic URL progression
 - **Self-healing**: Auto-installs missing Python packages during analysis
@@ -45,7 +46,8 @@ git clone https://github.com/yourusername/llm_quiz_solver.git
 cd llm_quiz_solver
 pip install -r pyproject.toml
 # or
-pip install -e .
+pip install -r requirements.txt
+playwright install chromium
 ```
 
 ### 2. Environment Variables
@@ -58,13 +60,7 @@ EMAIL=your_email@example.com
 SECRET=your_secret_code_word
 ```
 
-### 3. Install Playwright
-
-```bash
-playwright install chromium
-```
-
-### 4. Run Locally
+### 3. Run Locally
 
 ```bash
 uvicorn main:app --host 0.0.0.0 --port 7860
@@ -99,19 +95,31 @@ Health check endpoint.
 ## Project Structure
 
 ```
-├── agent.py                      # LangGraph state machine & orchestration
-├── main.py                       # FastAPI server with /solve endpoint
-├── pyproject.toml                # Project dependencies & metadata
-├── Dockerfile                    # Container image with Playwright
+├── agent.py                 \# LangGraph orchestration + Gemini 2.5 Flash
+├── main.py                  \# FastAPI /solve endpoint
+├── Dockerfile               \# HF Spaces + Playwright + ffmpeg
+├── requirements.txt         \# openai-whisper, torch, langgraph
 ├── tools/
-│   ├── __init__.py
-│   ├── web_scraper.py            # Playwright-based HTML rendering
-│   ├── code_generate_and_run.py   # Python code execution
-│   ├── download_file.py           # File downloader
-│   ├── send_request.py            # HTTP POST tool
-│   └── add_dependencies.py        # Dynamic package installer
+│   ├── __init__.py         \# Tool exports
+│   ├── web_scraper.py      \# Playwright HTML rendering
+│   ├── run_code.py         \# Python code execution
+│   ├── download_file.py    \# File downloader (audio/CSV/etc)
+│   ├── send_request.py     \# Quiz answer submission
+│   ├── add_dependencies.py \# Auto pip install
+│   └── transcribe_audio.py \# Whisper + ffmpeg (.opus → text)
 └── README.md
 ```
+
+## 🛠️ Tools Available
+
+| Tool | Purpose | Audio Support |
+|------|---------|---------------|
+| `get_rendered_html` | JS-rendered HTML scraping | ✅ Finds audio URLs |
+| `run_code` | Python code execution | |
+| `download_file` | Downloads files/audios | ✅ Audio files |
+| `post_request` | Submit quiz answers | |
+| `add_dependencies` | Auto pip install | |
+| `transcribe_audio` | Whisper transcription | ✅ `.opus/.wav/.ogg` |
 
 ## Deployment
 
@@ -146,20 +154,10 @@ Endpoint: `https://kradarsh-llm-quiz-solverv.hf.space/solve`
 4. **Submit**: Sends answer to quiz endpoint
 5. **Loop**: If a next URL exists, repeats from step 1
 
-## Tools Available
-
-| Tool | Purpose |
-|------|---------|
-| `web_scraper` | Fetch and render HTML using Playwright |
-| `code_generate_and_run` | Write and execute Python analysis |
-| `download_file` | Download CSV, JSON, PDF, images |
-| `send_request` | POST answers to quiz endpoint |
-| `add_dependencies` | Install missing Python packages |
-
 ## License
 
 MIT License
 
-## Author
-
-KrAdarsh - TDS Project 2
+## 👨‍💻 Author
+**KrAdarsh** - IITM TDS Project 2  
+[![GitHub](https://img.shields.io/badge/GitHub-KrAdarsh-black)](https://github.com/KrAdarsh)

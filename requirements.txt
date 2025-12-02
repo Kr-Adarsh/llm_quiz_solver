@@ -1,18 +1,22 @@
 fastapi
-uvicorn
+uvicorn[standard]
 python-dotenv
 requests
 playwright
 beautifulsoup4
 langgraph
-langchain
 langchain-core
 langchain-community
 langchain-google-genai
-langchain-openai
 pandas
 numpy
 scikit-learn
 scipy
 openpyxl
 pypdf
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchaudio
+torchvision
+openai-whisper
+ffmpeg-python

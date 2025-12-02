@@ -2,41 +2,48 @@ from langgraph.graph import StateGraph, END, START
 from langchain_core.rate_limiters import InMemoryRateLimiter
 from langgraph.prebuilt import ToolNode
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from tools import get_rendered_html, download_file, post_request, run_code, add_dependencies
+from tools import get_rendered_html, download_file, post_request, run_code, add_dependencies, transcribe_audio
 from typing import TypedDict, Annotated, List, Any
 from langchain.chat_models import init_chat_model
 from langgraph.graph.message import add_messages
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 
 EMAIL = os.getenv("EMAIL")
 SECRET = os.getenv("SECRET")
-RECURSION_LIMIT =  5000
+RECURSION_LIMIT = 8000  # Increased for complex audio flows
+
 # -------------------------------------------------
 # STATE
 # -------------------------------------------------
 class AgentState(TypedDict):
     messages: Annotated[List, add_messages]
 
-
-TOOLS = [run_code, get_rendered_html, download_file, post_request, add_dependencies]
-
+TOOLS = [
+    run_code,           # Execute Python code
+    get_rendered_html,  # Scrape/render JS pages  
+    download_file,      # Download files/audios to LLMFiles/
+    post_request,       # Submit answers to server
+    add_dependencies,   # pip install packages
+    transcribe_audio    # Transcribe .opus/.wav -> text
+]
 
 # -------------------------------------------------
 # GEMINI LLM
 # -------------------------------------------------
 rate_limiter = InMemoryRateLimiter(
-    requests_per_second=9/60,  
-    check_every_n_seconds=1,  
+    requests_per_second=9/60, 
+    check_every_n_seconds=1, 
     max_bucket_size=9  
 )
-llm = init_chat_model(
-   model_provider="google_genai",
-   model="gemini-2.5-flash",
-   rate_limiter=rate_limiter
-).bind_tools(TOOLS)   
 
+llm = init_chat_model(
+    model_provider="google_genai",
+    model="gemini-2.5-flash",
+    rate_limiter=rate_limiter
+).bind_tools(TOOLS) 
 
 # -------------------------------------------------
 # SYSTEM PROMPT
@@ -63,6 +70,18 @@ GENERAL RULES:
 - ALWAYS inspect the server response before deciding what to do next.
 - ALWAYS use the tools provided to fetch, scrape, download, render HTML, or send requests.
 
+AUDIO HANDLING RULES (CRITICAL):
+When instructions mention "listen", "audio", "transcribe", ".opus", ".ogg", ".wav", "spoken", or "phrase + digits":
+1. Use get_rendered_html to load the page
+2. Search HTML for audio URLs (look for href/src containing .opus, .ogg, .wav)
+3. Use download_file(audio_url) to save it (goes to LLMFiles/)
+4. Use transcribe_audio(filename, model="small") on the downloaded file  
+5. Submit using post_request to https://tds-llm-analysis.s-anand.net/submit with:
+   - url: current quiz URL
+   - answer: lowercase transcription (phrase + 3-digit code)  
+   - email: {EMAIL}
+   - secret: {SECRET}
+
 TIME LIMIT RULES:
 - Each task has a hard 3-minute limit.
 - The server response includes a "delay" field indicating elapsed time.
@@ -85,6 +104,7 @@ YOUR JOB:
 - Then respond with: END
 """
 
+
 prompt = ChatPromptTemplate.from_messages([
     ("system", SYSTEM_PROMPT),
     MessagesPlaceholder(variable_name="messages")
@@ -92,14 +112,12 @@ prompt = ChatPromptTemplate.from_messages([
 
 llm_with_prompt = prompt | llm
 
-
 # -------------------------------------------------
 # AGENT NODE
 # -------------------------------------------------
 def agent_node(state: AgentState):
     result = llm_with_prompt.invoke({"messages": state["messages"]})
     return {"messages": state["messages"] + [result]}
-
 
 # -------------------------------------------------
 # GRAPH
@@ -115,6 +133,7 @@ def route(state):
 
     if tool_calls:
         return "tools"
+    
     # get content robustly
     content = None
     if hasattr(last, "content"):
@@ -124,33 +143,28 @@ def route(state):
 
     if isinstance(content, str) and content.strip() == "END":
         return END
-    if isinstance(content, list) and content[0].get("text").strip() == "END":
+    if isinstance(content, list) and content[0].get("text", "").strip() == "END":
         return END
     return "agent"
-graph = StateGraph(AgentState)
 
+graph = StateGraph(AgentState)
 graph.add_node("agent", agent_node)
 graph.add_node("tools", ToolNode(TOOLS))
-
-
 
 graph.add_edge(START, "agent")
 graph.add_edge("tools", "agent")
 graph.add_conditional_edges(
-    "agent",    
-    route       
+    "agent", 
+    route
 )
 
 app = graph.compile()
-
 
 # -------------------------------------------------
 # TEST
 # -------------------------------------------------
 def run_agent(url: str) -> str:
     app.invoke({
-        "messages": [{"role": "user", "content": url}]},
-        config={"recursion_limit": RECURSION_LIMIT},
-    )
-    print("Tasks completed succesfully")
-
+        "messages": [{"role": "user", "content": url}],
+    }, config={"recursion_limit": RECURSION_LIMIT})
+    print("Tasks completed successfully")
